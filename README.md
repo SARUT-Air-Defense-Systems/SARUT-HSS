@@ -49,4 +49,3 @@ and integrated into the main branch via pull requests.
 
 ---
 
-## Repository Structure#
