@@ -47,15 +47,16 @@ class Simulation:
             cv2.circle(img, (int(x), int(y)), radius, color, -1)
         return img
 
-'''sim = Simulation()
+if __name__ == "__main__":
+    sim = Simulation()
     
-while True:
-    img = sim.run()
-    # Show the image
-    cv2.imshow('Balloon Simulation', img)
+    while True:
+        img = sim.run()
+        # Show the image
+        cv2.imshow('Balloon Simulation', img)
 
-    # Break the loop on 'q' key press
-    if cv2.waitKey(30) & 0xFF == ord('q'):
-        break
+        # Break the loop on 'q' key press
+        if cv2.waitKey(30) & 0xFF == ord('q'):
+            break
 
-cv2.destroyAllWindows()'''
+    cv2.destroyAllWindows()
