@@ -53,8 +53,8 @@ if __name__ == "__main__":
         cv2.imshow("Frame",frame)
         if cv2.waitKey(1) == ord('q'):
             break
-cap.release()
-cv2.destroyAllWindows()
+    cap.release()
+    cv2.destroyAllWindows()
 
 
  
