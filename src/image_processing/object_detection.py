@@ -15,6 +15,9 @@ class Detector:
     def __init__(self,profile="Red"):
         self.profile = COLOR_PROFILES.get(profile, COLOR_PROFILES["Red"])
         self.kernel = np.ones((3, 3), np.uint8)
+        self.candidate = None
+        self.stable_count = 0
+        self.stable_threshold = 5
         
 
     def detect(self, img):
@@ -33,8 +36,10 @@ class Detector:
         contours, _ = cv2.findContours(cleaned, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
         detections = []
+
         for cnt in contours:
-            if cv2.contourArea(cnt) < 100:
+            area = cv2.contourArea(cnt)
+            if area < 100:
                 continue
 
             x, y, w, h = cv2.boundingRect(cnt)
@@ -46,7 +51,7 @@ class Detector:
             if perimeter == 0:
                 continue
 
-            circularity = 4 * np.pi * cv2.contourArea(cnt) / (perimeter * perimeter)
+            circularity = 4 * np.pi * area / (perimeter * perimeter)
             if circularity < 0.5:
                 continue
 
@@ -55,13 +60,40 @@ class Detector:
                 continue
             cx = int(M["m10"] / M["m00"])
             cy = int(M["m01"] / M["m00"])
-            detections.append((cx, cy, x, y, w, h))
 
-        return detections, cleaned
+            score = area * circularity
+
+            detections.append((cx, cy, x, y, w, h, score))
+
+        if not detections:
+            return None, cleaned
+        
+        best = max(detections, key=lambda d: d[6])
+        return best[:6], cleaned
+    
+    def is_stable(self,detection):
+        if detection is None:
+            self.candidate = None
+            self.stable_count = 0
+        else:
+            if self.candidate is None:
+                self.candidate = detection
+                self.stable_count = 1
+            else:
+                dist = np.sqrt((detection[0] - self.candidate[0]) ** 2 + (detection[1] - self.candidate[1]) ** 2)
+                if dist < 50:
+                    self.stable_count += 1
+                    self.candidate = detection
+                    if self.stable_count >= self.stable_threshold:
+                        return True
+                else:
+                    self.candidate = detection
+                    self.stable_count = 1
+            
 
 if __name__ == "__main__":
     cap      = cv2.VideoCapture(0)
-    detector = Detector(profile="red")
+    detector = Detector(profile="Red")
 
     if not cap.isOpened():
         print("Cannot open camera")
@@ -73,9 +105,11 @@ if __name__ == "__main__":
             print("Failed to grab frame")
             break
 
-        detections, mask = detector.detect(frame)
+        best, mask = detector.detect(frame)
+        stable = detector.is_stable(best)
 
-        for cx, cy, x, y, w, h in detections:
+        if stable:
+            cx, cy, x, y, w, h = best
             cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 255), 2)
             cv2.circle(frame, (cx, cy), 5, (255, 255, 0), -1)
             print(f"Detected object at ({cx}, {cy}) with size ({w}x{h})")
