@@ -22,15 +22,13 @@ class Detector:
 
         hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
 
-        mask1 = cv2.inRange(hsv,self.profile[0][0], self.profile[0][1])
-        mask2 = cv2.inRange(hsv,self.profile[1][0], self.profile[1][1])
-        
-        mask = cv2.bitwise_or(mask1, mask2)
+        mask = cv2.inRange(hsv,self.profile[0][0], self.profile[0][1])
+        for lower, upper in self.profile[1:]:
+            mask = cv2.bitwise_or(mask, cv2.inRange(hsv, lower, upper))
 
         kernel = np.ones((3, 3), np.uint8)
         cleaned = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
         cleaned = cv2.morphologyEx(cleaned, cv2.MORPH_CLOSE, kernel)
-
 
         contours, _ = cv2.findContours(cleaned, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
@@ -60,7 +58,6 @@ class Detector:
             detections.append((cx, cy, x, y, w, h))
 
         return detections, cleaned
-
 
 if __name__ == "__main__":
     cap      = cv2.VideoCapture(0)
