@@ -22,8 +22,8 @@ class Detector:
 
         hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
 
-        mask1 = cv2.inRange(hsv, (0,   119, 199), (6,   229, 255))
-        mask2 = cv2.inRange(hsv, (69, 119, 199), (41, 229, 255))
+        mask1 = cv2.inRange(hsv,self.profile[0][0], self.profile[0][1])
+        mask2 = cv2.inRange(hsv,self.profile[1][0], self.profile[1][1])
         
         mask = cv2.bitwise_or(mask1, mask2)
 
